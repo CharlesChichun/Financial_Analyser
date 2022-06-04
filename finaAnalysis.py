@@ -1,3 +1,4 @@
+from http.client import InvalidURL
 import pandas as pd
 from postman_crawler import IS_M_QUAR, BS_M_QUAR, companyState, wholeState
 import matplotlib.pyplot as plt
@@ -29,16 +30,8 @@ def Ratio_Q(df_BS, df_IS, year, quarter=None, industry=None):
             cri_IS = df_IS["年份"] == year
             cri_BS = df_BS["年份"] == year
 
-    # print('type(df_IS["年份"][0]) = ', type(df_IS["年份"][0]))
-    # print('type(year)= ', type(year))
-    # print('df_IS[0] == year', df_IS["年份"][0] == year)
     df_IS_1 = df_IS[cri_IS]
-    # print('cri_IS = \n', cri_IS.sum())
     df_BS_1 = df_BS[cri_BS]
-
-
-# # TODO
-#     print('df_IS_1 = \n', df_IS_1)
 
     df_all = df_IS_1.merge(df_BS_1, on=["公司", "股票代號", "產業", "年份", "季度"])
     df_some = df_all[["公司", "股票代號", "產業", "年份", "季度", "營業收入", "營業成本", "營業毛利", "營業利益", "財務成本", "稅前淨利", "稅後淨利",

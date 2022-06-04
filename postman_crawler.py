@@ -1,8 +1,8 @@
-from operator import index
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from lxml import etree, html
+from lxml import html
+import numpy as np
 
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded;',
@@ -71,14 +71,24 @@ def addTimeNameIndux(df, sticker, season):
         20182:  ['2018Q2', '2018Q1', '2017Q4',
                  '2017Q3', '2017Q2', '2017Q1', '2016Q4']
     }
-    timeSer = switch.get(season, "")
+    switch = {
+        20214: [['2021', '2021', '2021',
+                '2021', '2020', '2020', '2020'], ['Q4', 'Q3', 'Q2', 'Q1', 'Q4', 'Q3', 'Q2']],
+        20201: [['2020', '2019', '2019',
+                '2019', '2019', '2018', '2018'], ['Q1', 'Q4', 'Q3', 'Q2', 'Q1', 'Q4', 'Q3']],
+        20182:  [['2018', '2018', '2017',
+                 '2017', '2017', '2017', '2016'], ['Q2', 'Q1', 'Q4', 'Q3', 'Q2', 'Q1', 'Q4']]
+    }
+    years = switch.get(season, "")[0]
+    quarters = switch.get(season, "")[1]
 
-    tmp = pd.DataFrame(columns=['公司', '股票代號', '產業', '時間'])
+    tmp = pd.DataFrame(columns=['公司', '股票代號', '產業', '年份', '季度'])
     name, indus = getNameIndus(sticker)
     tmp['公司'] = [name]*7
     tmp['股票代號'] = [sticker]*7
     tmp['產業'] = [indus]*7
-    tmp['時間'] = timeSer
+    tmp['年份'] = years
+    tmp['季度'] = quarters
 
     return pd.concat([tmp, df], axis=1)
 
@@ -108,9 +118,21 @@ def wholeState(companies, stype):
     dfs = []
     for c in companies:
         dfs.append(companyState(c, stype))
-        print(c, " done...")
-    print("All companies down")
-    return pd.concat(dfs, ignore_index=True)
+        if stype == IS_M_QUAR:
+            print(c, "損益表 獲取完成")
+        else:
+            print(c, "資產負債表 獲取完成")
+
+    wDf = pd.concat(dfs, ignore_index=True)
+
+    # Clean and Convert to float type
+    wDf.replace('-', 0, inplace=True)
+    wDf.replace(np.nan, 0, inplace=True)
+    numColsName = wDf.columns[5:]
+    wDf[numColsName] = wDf[numColsName].astype('float64')
+    wDf['年份'] = wDf['年份'].astype('int')
+    wDf['季度'] = wDf['季度'].astype('string')
+    return wDf
 
 
 if __name__ == '__main__':
